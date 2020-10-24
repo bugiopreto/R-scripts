@@ -1,0 +1,224 @@
+#Segunda : Cluste, Indval, K-menas
+#Terça: Ordenações: PCA, PcoA, DCA, NMDS
+#Quarta: CCA, Mantel, Protest, RDA
+#Quinta: partição
+#sexta: prova
+
+
+# 1 - Cluster analysis
+
+library(vegan)
+read.table("dendro.txt", header=T)->teste
+teste
+decostand(teste, method = "standardize")->testestand
+testestand
+vegdist(testestand, method = "euclidean")->testedist
+testedist
+hclust(testedist, method = "average")->result
+result
+cophenetic(result)->cofresult
+cofresult
+cor(cofresult, testedist)
+
+
+# 2 - Indval (pacote "labdsv")
+
+library(labdsv)
+read.table("indvalr.txt", header=T)->ind
+ind
+ind[,1]->grupo
+grupo
+ind[,-1]->sp
+sp
+indval(sp,grupo)->result
+result$maxcls
+result$indcls
+result$pval
+cbind(result$maxcls,result$indcls,result$pval)->resultado
+resultado
+colnames(resultado)<-c("maxgrp", "ind. value","P")
+resultado
+
+
+# 3 - PCA
+
+princomp(abio, cor = T)->teste1
+summary(teste1)
+eigenvals(teste1)
+bstick(8,tot.var=8) # neste caso, o 8 é correspondente ao número de variáveis. Sem esta informação, a função fornecerá informações entre a "0 e 1".
+loadings(teste1)
+scores(teste1)
+cor(abio,teste1$scores)
+biplot(teste1)
+
+
+# 4 - PCoA (pacote "labdsv")
+
+library(labdsv)
+library(vegan)
+read.table("dendro.txt", header=T)->teste
+teste
+decostand(teste, method = "standardize")->teste   #standardize data if in different unit
+vegdist(teste, method = "euclidean")->dist  #Compute distances among object
+dist
+pco(dist,k=8)->result  #'k' must be in {1, 2, ..  n - 1}
+result
+result$eig/sum(result$eig))*100 #porcentagem de explicação de cada eixo
+bstick(9,tot.var=1) # neste caso, o 9 é correspondente ao número de unidades de amostragem.
+result$points  #eigenvectors correspond to projections of objects
+summary(result)
+plot(result)
+
+
+# 5 - DCA
+
+library(vegan)
+read.table("dendro.txt", header = TRUE)->zoo
+zoo
+log(zoo + 1)->zoolog
+zoolog
+decorana(zoolog)->dcazoolog
+summary(dcazoolog) #Utilizar Decorana values
+plot(dcazoolog)
+plot(dcazoolog, display=c("sites"), type = "text")
+scores(dcazoolog, display=c("sites"))->sitescor
+scores(dcazoolog, display=c("species"))->spscor
+write.table(sitescor, "sitescor.txt")
+
+
+# 6 - NMDS
+
+library(MASS)
+library(vegan)
+read.table ("dendro.txt", header=TRUE)->zoo
+log(zoo + 1)->zoo
+vegdist(zoo, method="bray")->zoobray
+isoMDS(zoobray, k = 2, maxit = 100)->nms
+nms
+plot(nms$points)
+plot(nms$points, type = "n")
+text(nms$points, labels = as.character(1:nrow(zoo)))
+
+# 7 - CCA
+
+library(vegan)
+read.table("abio.txt", header = TRUE)->abio
+abio
+read.table("bio.txt", header = TRUE)->bio
+bio
+cca(bio,abio, scan = FALSE)->teste
+teste
+summary(teste)
+plot(teste)
+scores(teste, choices=c(1,2), display=c("sp","wa","lc","bp"), scaling=2)->escores
+
+# "wa" = Scores that are derived from the scores of sp
+# "lc" = Scores that are linear combinations of var
+# "bp" = Biplot Scores
+escores
+escores$species
+escores$sites
+escores$constraints
+escores$biplot
+cor(escores$sites,escores$constraints) # These are standard correlation coefficients between sample scores for an axis derived from the species data (the WA scores) and the sample scores that are linear combinations of the environmental variables (the LC scores)
+
+
+# 8 - Mantel
+
+library(vegan)
+read.table ("bio.txt", header=TRUE)->sp
+read.table ("abio.txt", header=TRUE)->gn
+vegdist(sp, method="bray")->spbray 
+vegdist(gn, method="bray")->gnbray
+mantel(spbray, gnbray, method="pearson", permutations=10000)
+
+
+# 9 - Mantel Parcial
+
+library(vegan)
+read.table ("dist.txt", header=TRUE)->dist
+read.table ("amb.txt", header=TRUE)->amb
+read.table ("gen.txt", header=TRUE)->gen
+decostand(amb,"standardize")->amb
+vegdist(dist, method="euclidean")->distdist
+vegdist(amb, method="euclidean")->ambdist
+vegdist(gen, method="euclidean")->gendist
+mantel.partial(gendist, ambdist, distdist, method = "pearson", permutations = 10000)
+
+
+# 10 - Protest
+
+library(vegan)
+read.table("bio.txt", header = TRUE)->clad
+read.table("abio.txt", header = TRUE)->cope
+decorana(clad)->dcaclad
+decorana(cope)->dcacope
+summary(dcaclad)
+summary(dcacope)
+scores(dcaclad, display=c("sites"), choices =1:2)->scordcaclad
+scores(dcacope, display=c("sites"), choices =1:2)->scordcacope
+protest(scordcaclad, scordcacope, scores = "sites", permutations = 10000)->cladcope
+
+
+# 11 - RDA
+
+library(vegan)
+read.table("abio.txt", header = TRUE)->abio
+abio
+read.table("bio.txt", header = TRUE)->bio
+bio
+rda(bio,abio, scan = FALSE)->teste
+teste
+summary(teste)
+plot(teste)
+scores(teste, choices=c(1,2), display=c("sp","wa","lc","bp"), scaling=2)->escores
+
+# "wa" = Scores that are derived from the scores of sp
+# "lc" = Scores that are linear combinations of var
+# "bp" = Biplot Scores
+escores
+escores$species
+escores$sites
+escores$constraints
+escores$biplot
+cor(escores$sites,escores$constraints) # These are standard correlation coefficients between sample scores for an axis derived from the species data (the WA scores) and the sample scores that are linear combinations of the environmental variables (the LC scores)
+
+
+# 12 - RDA parcial
+
+library(vegan)
+read.table("y.txt")->y
+y
+log(y+1)->y
+y
+read.table("a.txt")->a
+a
+read.table("c.txt")->c
+c
+varpart(y, a,c, transfo="hel")->var1
+siga<- rda(decostand(y, "hell"), a, c)
+sigc<- rda(decostand(y, "hell"), c, a)
+var1
+anova(siga, step=10000, perm.max=10000)->a1
+anova(sigc, step=10000, perm.max=10000)->c1
+a1
+c1
+
+resu.rdaparcial1<-matrix(,4,2)
+resu.rdaparcial1[1,1]<-as.matrix(var1$part$indfract$Adj.R.squared)[1,1]
+resu.rdaparcial1[2,1]<-as.matrix(var1$part$indfract$Adj.R.squared)[2,1]
+resu.rdaparcial1[3,1]<-as.matrix(var1$part$indfract$Adj.R.squared)[3,1]
+resu.rdaparcial1[4,1]<-as.matrix(var1$part$indfract$Adj.R.squared)[4,1]
+resu.rdaparcial1[1,2]<-as.matrix(a1$Pr)[1,1]
+resu.rdaparcial1[3,2]<-as.matrix(c1$Pr)[1,1]
+colnames(resu.rdaparcial1)<-c('R2', 'P')
+rownames(resu.rdaparcial1)<-c('a', 'b', 'c' ,'d')
+Seca_Euclid_Abund<-list(resu.rdaparcial1)
+write.table(Seca_Euclid_Abund,"Seca_Euclid_Abund.txt")
+Seca_Euclid_Abund
+
+write.csv(Seca_Euclid_Abund,"TESTE.csv")
+
+
+
+
