@@ -1,0 +1,366 @@
+# R: estatística aplicada a Ecologia
+# Robson Louiz Capretz
+# Ecólogo, Mestre em Ecologia
+# robsoncapretz@yahoo.com.br
+
+
+
+
+
+### LEITURA OBRIGATÓRIA PARA QUALQUER ECÓLOGO QUE SE PREZE:
+### Magurran, A. 1998. Ecological Diversity and its measurement. Princeton University Press. 192p.
+
+
+
+
+# Instalação de pacotes no R
+## Menu Pacotes / Instalar pacotes a partir de arquivos zip locais
+
+
+
+
+# Pacote vegan
+library(vegan)
+                          
+# Pacote cluster
+library(cluster)
+
+# Pacote stats
+library(stats)  
+
+# OBS: os pacotes cluster e stats vem por padrão no R; o vegan deve ser baixado no CRAN
+                          
+
+                  
+  
+                          
+# DADOS: BCI
+# Dados de árvores na Ilha de Barro Colorado (BCI), no Panamá
+## data.frame com 50 linhas (parcelas) e 225 colunas (espécies), em uma parcela de 1 hectare
+## árvores a partir de 10cm de diâmetro na altura do peito (aproximadamente 1,3m)
+### REFERÊNCIA BIBLIOGRÁFICA: Condit, R, Pitman, N, Leigh, et al. (2002).
+### Beta-diversity in tropical forest trees. Science 295, 666–669.
+
+data(BCI)
+dim(BCI)
+BCI[1:10,]
+BCI [1,]
+
+ 
+ 
+ 
+ 
+
+# DADOS: varespec
+## Dados de vegetação em pastagens de líquens
+## 24 linhas e 44 colunas (valores estimados para as espécies)
+## REFERÊNCIA BIBLIOGRÁFICA: Väre, H., Ohtonen, R. and Oksanen, J. (1995)
+## Effects of reindeer grazing on understorey vegetation in dry Pinus sylvestris forests.
+## Journal of Vegetation Science 6, 523–530.
+
+data(varespec)
+varespec
+ls()
+
+
+
+
+
+
+
+# ÍNDICES DE DIVERSIDADE
+# O que é biodiversidade?
+                     
+
+## Riqueza de espécies (S)
+S <- specnumber(BCI)
+S
+rowSums(BCI>0)
+
+## Abundância de espécies (N)
+N <- colSums(BCI)
+N
+
+
+
+
+## Shannon (H')
+### Considera que os indivíduos são amostrados em uma população 'infinitamente grande'
+### Considera que todas as espécies estão representadas na amostra
+?diversity
+H <- diversity(BCI, index="shannon")
+H
+
+
+
+          
+## Eqüitatividade (evenness) de Pielou (J)
+### Porque duas amostras com valores de Shannon (H') semelhantes podem ser muito diferentes em abundância e riqueza
+J<- H/log(S)
+J
+#### O índice de Eqüitatividade de Pielou vai de 0 a 1
+#### Para valores próximos a 1, a amostra é mais 'eqüitativa' do que valores próximos a 0
+
+
+
+
+## Índice de Simpson (D)
+### Probabilidade de que indivíduos quaisquer amostrados (em uma comunidade infinitamente grande) pertençam
+### a diferentes espécies
+D <- diversity(BCI, index="simpson")
+D
+
+### Inverso de Simpson
+Dinv <- diversity(BCI, index="invsimpson")
+Dinv
+
+
+
+## Rarefação
+### Número esperado de de espécies por (sub)amostra
+?rarefy
+rare <- rarefy(BCI,2)
+rare
+
+
+
+## Parâmetro Alfa de Fisher (série logarítmica de Fisher)
+?fisher.alpha
+alpha <- fisher.alpha(BCI)
+alpha
+
+
+
+
+
+# 'Curva do Coletor'
+## Curva de acumulação de espécies em função da quantidade de unidades amostrais
+## Até quando é preciso mais unidades amostrais para estudar a diversidade de espécies?
+?specaccum
+curva <- specaccum(BCI, method="random")
+curva
+summary(curva)
+plot(curva, ci.type="poly", col="blue", lwd=2, ci.lty=0, ci.col="lightblue")
+boxplot(curva, col="yellow", add=TRUE, pch="+")
+
+
+   
+
+
+
+
+
+# ÍNDICES DE (DIS)SIMILARIDADE
+## Locais ou comunidades são mais ou menos semelhantes?
+      
+      
+      
+## Índice de Jaccard
+## Um dos mais utilizados em Ecologia, em razão de sua SIMPLICIDADE
+## Mas... não considera a abundância de espécies (todas as espécies tem peso igual no cálculo).
+?vegdist
+jac <- vegdist(varespec, method="jaccard")
+
+
+
+## Morisita-Horn
+### Quase todos os índices de similaridade são MUITO influenciados pela RIQUEZA de espécies e TAMANHO AMOSTRAL
+### Quase todos, menos o de Morisita-Horn! Mas... ele é influenciado pela abundância da espécie dominante.
+morhorn <- vegdist(varespec, method="horn")
+
+
+# Resultados: matrizes de similaridade entre amostras/locais/comunidades!
+jac
+morhorn
+
+plot(jac, pch=".")
+text(jac, cex=0.7)
+
+### Comando para abrir duas (ou mais) janelas no R:
+x11()
+
+plot(morhorn, pch=".")
+text(morhorn, cex=0.7)
+
+### Mas como interpretar esses gráficos confusos?
+
+
+
+# Análises de Agrupamento (Cluster)
+# UPGMA (Unweighted Pair Group Average Method)
+## Há diversos outros métodos, como 'single linkage', 'complete linkage', Ward
+## disponíveis como argumento da função agnes
+library(cluster)
+?agnes
+
+
+# Dendrograma para o índice de Jaccard
+grafjac <- agnes(jac, method="average")
+plot(grafjac)
+
+x11()
+
+# Dendrograma para o índice de Morisita-Horn
+grafmor <- agnes(morhorn, method="average")
+plot(grafmor)
+
+
+
+# PCA (Análises de Componentes Principais)
+
+library(stats)
+
+?prcomp
+vare.pca <- prcomp(varespec)
+vare.pca
+
+?scores
+scores(vare.pca, choices=c(1,2))
+scores(vare.pca, choices=c(1,2,3))
+
+?biplot
+biplot(vare.pca)
+
+
+
+### Como salvar as figuras?
+### Exemplo: curva do coletor 
+plot(curva, ci.type="poly", col="blue", lwd=2, ci.lty=0, ci.col="lightblue")
+
+# Título e legendas
+plot(curva, ci.type="poly", col="blue", lwd=2, ci.lty=0, ci.col="lightblue", main="Curva do Coletor", xlab="Parcelas", ylab="Número de espécies")
+
+?jpeg 
+jpeg("curva.jpg", width=640, height=480, res=100)
+dev.off()
+
+### Como salvar tabelas com resultados?
+?write.table
+
+
+
+
+
+
+
+
+# Exercício
+# DADOS: Aves
+## Uma floresta de aproximadamente 300 mil hectares, entre as cidades de Taperebá e Montenegro, 
+## transformou-se em um fragmento florestal de 150 mil hectares, depois da abertura da estrada SAN-001,
+## que liga as duas cidades. A importância da obra reside na única ligação entre as duas principais cidades 
+## da República de Santa Cruz, um pequeno país da América Latina. A capital, Montenegro, é o principal centro 
+## econômico, enquanto Taperebá é a principal fornecedora de matéria-prima. Ecólogos e biólogos santacruzenses,
+## preocupados com os impactos sobre a floresta, resolveram fazer levantamentos de espécies-bandeira, para
+## para subsidiar um plano de manejo, e elaborar medidas mitigadoras e reparadoras. O grupo escolheu estudar
+## a comunidade de aves do local, aliando dados sobre a estrutura da floresta, tais como Altitude, Abertura do
+## Dossel, Altura do Dossel, Temperatura, Capacidade de Troca Catiônica do Solo e Esclerofilia.
+## Objetivo: identificar as áreas mais degradadas dentro do fragmento, e identificar as espécies indicadoras.
+### 10 parcelas de 50x50m foram montadas aleatoriamente dentro da área do fragmento. Nestas parcelas foram 
+### levantadas as principais espécies de aves, e feitas medidas abióticas.
+
+## Ler dados
+aves<-read.table("aves.csv", sep=",", header=TRUE)
+aves
+dim(aves)
+aves<-aves[,2:16]
+aves
+
+avesparc<-read.table("parc.txt", sep=",", header=TRUE)
+avesparc
+dim(avesparc)
+avesparc<-avesparc[,2:7]
+avesparc
+  
+## Riqueza de espécies (S)
+S <- specnumber(aves)
+S
+
+## Abundância de espécies (N)
+N <- colSums(aves)
+N
+   
+## Shannon (H')
+H <- diversity(aves, index="shannon")
+H
+        
+## Eqüitatividade (evenness) de Pielou (J)
+J<- H/log(S)
+J
+
+## Índice de Simpson (D)
+D <- diversity(aves, index="simpson")
+D
+
+### Inverso de Simpson
+Dinv <- diversity(aves, index="invsimpson")
+Dinv
+  
+## Rarefação
+rare <- rarefy(aves,2)
+rare
+      
+              
+# 'Curva do Coletor'
+curva <- specaccum(aves, method="random")
+curva
+summary(curva)
+plot(curva, ci.type="poly", col="blue", lwd=2, ci.lty=0, ci.col="lightblue")
+boxplot(curva, col="yellow", add=TRUE, pch="+")
+
+# ÍNDICES DE (DIS)SIMILARIDADE
+
+## Índice de Jaccard
+avesjac <- vegdist(aves, method="jaccard")
+parcjac <- vegdist(avesparc, method="jaccard")
+  
+## Morisita-Horn
+avesmor <- vegdist(aves, method="horn")
+parcmor <- vegdist(avesparc, method="horn")
+
+avesmor
+parcmor
+
+
+# Análises de Agrupamento (Cluster)
+# UPGMA (Unweighted Pair Group Average Method)
+library(cluster)
+
+# Dendrograma para o índice de Jaccard
+grafavesjac <- agnes(avesjac, method="average")
+plot(grafavesjac)
+
+x11()
+
+# Dendrograma para o índice de Morisita-Horn
+grafavesmor <- agnes(avesmor, method="average")
+plot(grafavesmor)
+
+## É possível também fazer os dendrogramas para os dados abióticos
+
+grafparcjac <- agnes(parcjac, method="average")
+plot(grafparcjac)
+x11()
+grafparcmor <- agnes(parcmor, method="average")
+plot(grafparcmor)
+
+
+
+# PCA (Análises de Componentes Principais)
+library(stats)
+
+# PCA 
+aves.pca <- prcomp(aves)
+aves.pca
+
+parc.pca <- prcomp(avesparc)
+parc.pca
+
+scores(aves.pca)
+scores(parc.pca)
+
+biplot(aves.pca)
+x11()
+biplot(parc.pca)
+
+  
