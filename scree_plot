@@ -1,0 +1,6 @@
+scree.plot = function(d, k) {
+    stresses=metaMDS(d, k=k)$stress
+    for(i in rev(seq(k-1))) 
+        stresses=append(stresses,metaMDS(d, k=i)$stress)
+    plot(seq(k),rev(stresses), type="b", xaxp=c(1,k, k-1), ylab="Stress", xlab="Number of dimensions")
+}
