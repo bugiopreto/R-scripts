@@ -1,0 +1,85 @@
+library(vegan)
+#Comandos para rodar NMDS e função envfit
+
+biologico=read.csv2(file.choose(),header=T)
+biologico
+
+abiotico=read.csv2(file.choose(),header=T)
+abiotico
+
+#NMDS
+
+NMDS=metaMDS(biologico,distance="bray",k=2,autotransform=F)
+NMDS=metaMDS(biologico,distance="bray",k=2,autotransform=F,previous.best=NMDS)
+NMDS$stress#para informar o estresse
+plot(NMDS)
+#Selecionar o arquivo de scree.plot no (source R code via file)
+scree.plot(biologico,6)#roda um NMDS com 6 dimensões
+scree.plot(biologico,8)
+stressplot(NMDS)
+
+#DIFERENCIAR OS PONTOS DE ACORDO COM ALGUMA VARIÁVEL CATEGÓRICA
+HIDROPERÍODO (TIPO)
+
+borda=NMDS$points[c(1:3),1:2]
+borda
+meio=NMDS$points[4:6,1:2]
+meio
+fundo=NMDS$points[7:9,1:2]
+fundo
+
+#PLOT NMDS
+options(OutDec=",")
+jpeg("figuraNMDS2.jpg", width=15, height=15, units="cm", res=300)
+plot(NMDS, display = c("species"), cex = 1.3, bty="l")
+points(borda, col = "black", pch = 16, cex = 2)
+points(meio, col = "gray60", pch=16, cex = 2)
+points(fundo, col= "gray90", pch = 19, cex = 2)
+with(abiotico, legend("topleft", levels(Estrato), bty="n", pch = c(16,16,19), col = c("black", "gray90", "gray60"), title = "Estrato"))
+plot(fit, p.max=0.05)
+dev.off()
+5getwd()
+?legend
+
+
+scores(NMDS, display = "sites")
+
+#x11()
+
+ordihull(NMDS,biologico$Estrato,display="sites",draw=c("polygon"))
+ordihull(NMDS,biologico$variaveis,display="sites",draw=c("polygon"))
+ordihull(NMDS,biologico$,col="purple",label=TRUE)
+ordispider(NMDS,abiotico$Estrato,col="purple",label=F)#plota os centróides
+ordiellipse(NMDS,abiotico$Estrato,col="purple",label=TRUE, show.groups=1)
+
+
+#FUNÇÃO ENVFIT
+
+fit=envfit(NMDS,abiotico,perm=999)
+fit
+
+scores(NMDS, display = "species")
+scores(NMDS, display = "sites")
+plot(NMDS, type='n')
+ordiellipse(NMDS,abiotico$Pampa,col="purple",label=TRUE, show.groups=1)
+
+
+#PLOT NMDS + ENVFIT
+
+plot(NMDS, display = c("sites", "species"))
+points(pampa, col = "black", pch = 16)
+points(resto, col = "gray")
+plot(fit, p.max=0.05)
+text(NMDS, display="sites")
+text(NMDS, display="species")
+plot(NMDS, display = "species")
+plot(NMDS, display = "sites")
+
+#PERMANOVA
+permanova=adonis(biologico~PCA1, data=abiotico, permutation=9999, method= "bray")
+permanova
+
+#ESPÉCIES INDICADORAS
+iv_Tipo=indval(biologico,abiotico$Tipo, numitr=9999)
+iv_Tipo
+summary(iv_Tipo,p=0.05)
