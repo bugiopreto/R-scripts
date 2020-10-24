@@ -1,0 +1,70 @@
+## Carregar pacotes----
+library(arm)
+library(boot)
+library(cAIC4)
+library(cowplot)
+library(corrplot)
+library(DHARMa)
+library(doBy)
+library(effects)
+library(factorplot) 
+library(fitdistrplus)
+library(glmmADMB)
+library(ggplot2)
+library(gridExtra)
+library(HLMdiag)
+library(influence.ME)
+library(lattice)
+library(lme4)
+library(lmerTest)
+library(MASS)
+library(mgcv)
+library(multcomp)
+library(MuMIn)
+library(nlme)
+library(parallel)
+library(pbkrtest) 
+library(pscl)
+library(pROC)
+library(ROCR)
+require(sjPlot)
+library(VGAMdata)
+library(visreg)
+
+
+Data <- read.table ("data5.txt", header=T)
+
+ggplot(Data, aes(x=(log(CHUV0^2)), y=NDVI0)) + 
+  geom_point(shape=18, color="blue")+
+  geom_smooth(method="glm",  linetype="dashed",
+              color="darkred", fill="blue")
+
+ggplot(Data, aes(x=CHUV0, y=NDVI0, color=MUN)) +
+  geom_point() + 
+  geom_smooth(method=lm)
+
+
+ggplot(Data, aes(x=TEMP0, y=NDVI0, shape=MUN, color=MUN)) +
+  geom_point() + 
+  geom_smooth(method=lm, aes(fill=MUN))
+
+função 
+facet_warp(~MUN)
+ggplot(Data, aes(NDVI0,TEMP0))+geom_point()+geom_smooth(method=lm,se=F)+facet_wrap(~MUN)
+
+
+m2  <- lm(NDVI0 ~ log(TEMP0) + (log(CHUV0)) + I(log(CHUV0)^2),  data=Data)
+summary(m2)
+anova(m2)
+
+m2 <- lmer(NDVI0 ~ TEMP0 + (1|MUNI), data=Data)
+summary(m2)
+round(r.squaredGLMM(m2)*100,2)
+
+cor()
+cor.test(Data$BVN,Data$NDVI0, method = "pearson")
+
+model2 <- lmer(NDVI ~ log(TEMP) + log(CHUVA) + I(log(CHUVA)^2) + log(BVN0) + I(log(BVN0)^2) + log(OVN0) + (1|MUNI), data=Data)
+anova(model2)
+summary(model2)
+
