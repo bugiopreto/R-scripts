@@ -1,0 +1,524 @@
+install.packages("arm")
+library(arm)
+library(boot)
+library(cAIC4)
+library(cowplot)
+library(corrplot)
+library(DHARMa)
+library(doBy)
+library(effects)
+library(factorplot) 
+library(fitdistrplus)
+library(glmmADMB)
+library(ggplot2)
+library(gridExtra)
+library(HLMdiag)
+library(influence.ME)
+library(lattice)
+library(lme4)
+library(lmerTest)
+library(MASS)
+library(mgcv)
+library(multcomp)
+library(MuMIn)
+library(nlme)
+library(parallel)
+library(pbkrtest) 
+library(pscl)
+library(pROC)
+library(ROCR)
+require(sjPlot)
+library(VGAMdata)
+library(visreg)
+library(dplyr)
+library(spaMM)
+library(rcdd)
+library(ROCR)
+library(ggplot2)
+library(lattice)
+install.packages("r.squaredGLMM")
+library(r.squaredGLMM)
+install.packages("pwt8")
+library(pwt8)
+
+#########IMPUT DOS DADOS DE SÉRIE TEMPORAL DA CULTURA##################
+dados=read.csv2(file.choose(),header=T)
+
+
+soja.ts <- ts(dados$Soja, start=2007, freq=12)
+plot(soja.ts,main='Produção de Soja',
+     ylab='Produção de Soja (ton)', xlab = 'Meses',
+     bty='l',col='red',lty=1)
+soja.ts
+
+arroz.ts <- ts(dados$Arroz, start=2007, freq=12)
+plot(arroz.ts,main='Produção de Arroz',
+     ylab='Produção de Arroz (ton)', xlab = 'Meses',
+     bty='l',col='red',lty=1)
+arroz.ts
+
+trigo.ts <- ts(dados$Trigo, start=2007, freq=12)
+plot(trigo.ts,main='Produção de Trigo',
+     ylab='Produção de Trigo (ton)', xlab = 'Meses',
+     bty='l',col='red',lty=1)
+trigo.ts
+
+aveia.ts <- ts(dados$Aveia, start=2007, freq=12)
+plot(aveia.ts,main='Produção de Aveia',
+     ylab='Produção de Aveia (ton)', xlab = 'Meses',
+     bty='l',col='red',lty=1)
+aveia.ts
+
+batata.ts <- ts(dados$Batata, start=2007, freq=12)
+plot(batata.ts,main='Produção de Batata',
+     ylab='Produção de Batata (ton)', xlab = 'Meses',
+     bty='l',col='red',lty=1)
+batata.ts
+
+fumo.ts <- ts(dados$Fumo, start=2007, freq=12)
+plot(fumo.ts,main='Produção de Fumo',
+     ylab='Produção de Fumo (ton)', xlab = 'Meses',
+     bty='l',col='red',lty=1)
+fumo.ts
+
+uva.ts <- ts(dados$Uva, start=2007, freq=12)
+plot(uva.ts,main='Produção de Uva',
+     ylab='Produção de Uva (ton)', xlab = 'Meses',
+     bty='l',col='red',lty=1)
+uva.ts
+
+
+chuva.ts <- ts(dados$Precipitação, start=2007, freq=12)
+plot(chuva.ts,main='Precipitação Total',
+     ylab='Precipitação (mm)', xlab = 'Meses',
+     bty='l',col='red',lty=1)
+chuva.ts
+
+evapo.ts <- ts(dados$Evapotranspiração, start=2007, freq=12)
+plot(evapo.ts,main='Evapotranspiração média',
+     ylab='Evapotranspiração', xlab = 'Meses',
+     bty='l',col='red',lty=1)
+evapo.ts
+
+#########################FUNÇÃO DECOMPOSE#########################################
+dec.chuva <- decompose(chuva.ts)
+dec.chuva
+plot(dec.chuva)
+
+dec.arroz <- decompose(arroz.ts)
+dec.arroz
+plot(dec.arroz)
+
+dec.aveia <- decompose(aveia.ts)
+dec.aveia
+plot(dec.aveia)
+
+dec.batata <- decompose(batata.ts)
+dec.batata
+plot(dec.batata)
+
+
+dec.fumo<- decompose(fumo.ts)
+dec.fumo
+plot(dec.fumo)
+
+dec.soja<- decompose(soja.ts)
+dec.soja
+plot(dec.soja)
+
+dec.trigo<- decompose(trigo.ts)
+dec.trigo
+plot(dec.trigo)
+
+dec.uva<- decompose(uva.ts)
+dec.uva
+plot(dec.uva)
+
+dec.evapo<- decompose(evapo.ts)
+dec.evapo
+plot(dec.evapo)
+
+
+#########################EXTRAÇÃO DOS DADOS SEM EFEITOS#########################################
+
+arroz.randon <- dec.arroz$random
+
+aveia.randon <- dec.aveia$random
+
+batata.randon <- dec.batata$random
+
+chuva.randon <- dec.chuva$random
+
+fumo.randon <- dec.fumo$random
+
+soja.randon <- dec.soja$random
+
+trigo.randon <- dec.trigo$random
+
+uva.randon <- dec.uva$random
+
+evapo.randon <- dec.evapo$random
+
+
+#########################MODELAGEM#########################################
+
+#ARROZ
+mod.arroz <- glm(arroz.randon ~ chuva.randon + evapo.randon)
+anova(mod.arroz, test="F")
+summary (mod.arroz)
+AIC(mod.arroz)
+
+mod.arroz1 <- glm(arroz.randon ~ chuva.randon*evapo.randon)
+anova(mod.arroz1)
+summary (mod.arroz1)
+AIC(mod.arroz1)
+round(r.squaredGLMM(mod.arroz1)*100,2)
+
+anova(mod.arroz1, mod.arroz, test="F")
+
+
+#AVEIA
+
+mod.aveia <- glm(aveia.randon ~ chuva.randon + evapo.randon)
+anova(mod.aveia, test="F")
+summary (mod.aveia, test ="F")
+AIC(mod.aveia)
+round(r.squaredGLMM(mod.aveia)*100,2)
+
+mod.aveia1 <- glm(aveia.randon ~ chuva.randon*evapo.randon)
+anova(mod.aveia1)
+summary (mod.aveia1)
+AIC(mod.aveia1)
+round(r.squaredGLMM(mod.aveia)*100,2)
+
+anova(mod.aveia1, mod.aveia, test="F")
+
+
+#BATATA
+
+mod.batata <- glm(batata.randon ~ chuva.randon + evapo.randon)
+anova(mod.batata, test="F")
+summary (mod.batata)
+AIC(mod.batata)
+round(r.squaredGLMM(mod.batata)*100,2)
+
+mod.batata1 <- glm(batata.randon ~ chuva.randon*evapo.randon)
+anova(mod.batata1, test="F")
+summary (mod.batata1)
+AIC(mod.batata1)
+round(r.squaredGLMM(mod.batata1)*100,2)
+
+anova(mod.batata1, mod.batata, test="F")
+
+
+#FUMO
+
+mod.fumo <- glm(fumo.randon ~ chuva.randon + evapo.randon)
+anova(mod.fumo, test="F")
+summary (mod.fumo)
+AIC(mod.fumo)
+round(r.squaredGLMM(mod.fumo)*100,2)
+
+mod.fumo1 <- glm(fumo.randon ~ chuva.randon*evapo.randon)
+anova(mod.fumo1, test="F")
+summary (mod.fumo1)
+AIC(mod.fumo1)
+round(r.squaredGLMM(mod.fumo1)*100,2)
+
+anova(mod.fumo1, mod.fumo, test="F")
+
+
+#SOJA
+
+mod.soja <- glm(soja.randon ~ chuva.randon + evapo.randon)
+anova(mod.soja, test="F")
+summary (mod.soja)
+AIC(mod.soja)
+round(r.squaredGLMM(mod.soja)*100,2)
+
+mod.soja1 <- glm(soja.randon ~ chuva.randon*evapo.randon)
+anova(mod.soja1, test="F")
+summary (mod.soja1)
+AIC(mod.soja1)
+round(r.squaredGLMM(mod.soja1)*100,2)
+
+anova(mod.soja1, mod.soja, test="F")
+
+
+
+#TRIGO
+
+mod.trigo <- glm(trigo.randon ~ chuva.randon + evapo.randon)
+anova(mod.trigo, test="F")
+summary (mod.trigo)
+AIC(mod.trigo)
+round(r.squaredGLMM(mod.trigo)*100,2)
+
+mod.trigo1 <- glm(trigo.randon ~ chuva.randon*evapo.randon)
+anova(mod.trigo1, test="F")
+summary (mod.trigo1)
+AIC(mod.trigo1)
+round(r.squaredGLMM(mod.trigo1)*100,2)
+
+anova(mod.trigo1, mod.trigo, test="F")
+
+
+#UVA
+
+mod.uva <- glm(uva.randon ~ chuva.randon + evapo.randon)
+anova(mod.uva, test="F")
+summary (mod.uva)
+AIC(mod.uva)
+round(r.squaredGLMM(mod.uva)*100,2)
+
+mod.uva1 <- glm(uva.randon ~ chuva.randon*evapo.randon)
+anova(mod.uva1, test="F")
+summary (mod.uva1)
+AIC(mod.uva1)
+round(r.squaredGLMM(mod.uva1)*100,2)
+
+anova(mod.uva1, mod.uva, test="F")
+
+
+
+#######################################EXPORTAR SÉRIE############################################
+
+install.packages("WriteXLS")
+library(WriteXLS)
+
+
+write.table(c(arroz.randon, aveia.randon, batata.randon, fumo.randon, soja.randon, trigo.randon, uva.randon), file = "Culturas Random")
+
+write.table(c(chuva.randon, evapo.randon), file = "CLima Random")
+
+############################MODELO ARIMA##############################################################
+library(forecast)
+# Fazer modelo ARIMA
+arroz.arima = auto.arima(arroz.randon)
+arroz.arima
+# Projeção 
+arroz.forec = forecast(arroz.arima, level = c(35,50))
+arroz.forec
+# Impressão de gráfico com série temporal e projeção com intervalos de confiança
+plot(arroz.forec)
+# Incluir no gráfico os valores do modelo para dados observados em azul
+lines(fitted(arroz.arima),col="blue")
+
+
+
+arroz.arima = auto.arima(arroz.randon)
+arroz.arima
+arroz.forec = forecast(arroz.arima, level = c(35,50))
+arroz.forec
+plot(arroz.forec)
+lines(fitted(arroz.arima),col="blue")
+
+arroz.arima1 = auto.arima(arroz.ts)
+arroz.arima1
+arroz.forec1 = forecast(arroz.arima1, level = c(35,50))
+arroz.forec1
+plot(arroz.forec1)
+lines(fitted(arroz.arima1),col="blue")
+
+aveia.arima = auto.arima(aveia.ts)
+aveia.arima
+aveia.forec = forecast(aveia.arima, level = c(35,50))
+aveia.forec
+plot(aveia.forec)
+lines(fitted(arroz.arima),col="blue")
+
+batata.arima = auto.arima(batata.ts)
+batata.arima
+batata.forec = forecast(batata.arima, level = c(35,50))
+batata.forec
+plot(batata.forec)
+lines(fitted(batata.arima),col="blue")
+
+fumo.arima = auto.arima(fumo.ts)
+fumo.arima
+fumo.forec = forecast(fumo.arima, level = c(35,50))
+fumo.forec
+plot(fumo.forec)
+lines(fitted(fumo.arima),col="blue")
+
+soja.arima = auto.arima(soja.ts)
+soja.arima
+soja.forec = forecast(soja.arima, level = c(35,50))
+soja.forec
+plot(soja.forec)
+lines(fitted(soja.arima),col="blue")
+
+trigo.arima = auto.arima(trigo.ts)
+trigo.arima
+trigo.forec = forecast(trigo.arima, level = c(35,50))
+trigo.forec
+plot(trigo.forec)
+lines(fitted(trigo.arima),col="blue")
+
+
+uva.arima = auto.arima(uva.ts)
+uva.arima
+uva.forec = forecast(uva.arima, level = c(35,50))
+uva.forec
+plot(uva.forec)
+lines(fitted(uva.arima),col="blue")
+
+
+#########DUMIIES SAZONAIS e REGRESSAO SAZONAL##################
+Q <- ordered(cycle(ts.chuva))
+
+reg.chuva <- lm(ts.chuva ~ Q)
+
+summary(reg.chuva)
+
+
+chuva.des <- ts(resid(reg.chuva), start = 2007, freq=12)
+chuva.hat <- ts(fitted(reg.chuva), start=2007, freq=12)
+par(mfrOW=C(1,2))
+plot(chuva.des)
+plot(chuva.hat)
+
+#####AJUSTE DE VALORES NEGATIVOS##################################
+chuva.desn <- chuva.des + mean(fitted(reg.chuva))
+
+
+#####PLOT COM DOIS VALORES##################################
+par(mfrow=c(1,1))
+plot(chuva.ts, main='', xlab='Meses', ylab='', col='blue')
+par (new=TRUE)
+plot(soja.ts, axes=F, ann=F, col='red', lty=2)
+legend('topleft', c('Precipitação', 'Precipitação Dessazonalizada'),
+       col=c('blue', 'red'), lty=1:2, bty='n')
+grid(col='darkgray')
+
+
+
+########PLOT CORREÇÃO LONGO PRAZO##############################
+
+filtrohp <- function(y, lambda){
+id <- diag(length(y))
+d <- diff(id, d=2)
+tendhp <- solve(id+lambda*crossprod(d), y)
+tendhp
+}
+
+### Em geral, os valores recomendados5 de  são aproximadamente 100 para dados anuais,
+#1600 para dados trimestrais e 14400 para dados mensais.###
+
+lambda <- 100
+tendencia <- filtrohp(pibanual, lambda)
+hppib <- pibanual - tendencia
+
+
+
+par(mfrow=c(1,1))
+plot(chuva.desn, main='', xlab='Meses', ylab='', col='blue')
+par (new=TRUE)
+plot(tendencia, axes=F, ann=F, col='darkgreen', lty=2)
+par (new=TRUE)
+plot(hpchuva, axes=F, ann=F, col='red', lty=2)
+legend('topleft', c('Precipitação Dessazonalizada', 'Tendência', 'Precipitação HP'),
+       col=c('blue', 'darkgreen', 'red'), lty=1:3, bty='n')
+grid(col='darkgray')
+
+#########################FUNÇÃO DECOMPOSE#########################################
+dec.chuva <- decompose(chuva.ts)
+dec.chuva
+plot(dec.chuva)
+
+dec.soja <- decompose(ts.soja)
+plot(dec.soja)
+
+
+
+####### OUTRAS ESTIMATIVAS ############################
+library(readxl)
+library(foreign)
+library(dynlm)
+library(car)
+library(lmtest)
+library(sandwich)
+library(fpp2)
+library(tseries)
+library(zoo)
+library(forecast)
+library(ggplot2)
+install.packages("BETS")
+library(BETS)
+library(forecast)
+
+chuva_nova <- ts.soja
+chuva_nova %>% ggtsdisplay(main="")
+
+chuva_nova %>% diff() %>% ggtsdisplay(main = "Série varejo de MS em primeira diferença")
+chuva_nova %>% diff(lag = 12) %>% ggtsdisplay(main = "Série Chuva Nova de MS em primeira diferença sazonal")
+
+install.packages("fpp2")
+library(fpp2)
+chuvaadj <- chuva_nova %>% stl(s.window = "periodic") %>% seasadj()
+
+autoplot (chuva_ajustada)
+######################################################################################################
+
+
+
+
+############################MODELO ARIMA##############################################################
+
+# Ler dados observados de arquivo CSV
+dados.obs = read.csv(filepath, header = TRUE)
+# Criar série temporal com uma coluna dos dados observados
+dados.ts = ts(dados.obs$valor, frequency = 12, start = c(start.year.hist, start.month.hist))
+# Fazer modelo ARIMA
+modelo.arima = auto.arima(ts.soja)
+modelo.arima
+# Projeção 
+forec = forecast(modelo.arima, level = c(35,50))
+forec
+# Impressão de gráfico com série temporal e projeção com intervalos de confiança
+plot(forec)
+# Incluir no gráfico os valores do modelo para dados observados em azul
+lines(fitted(modelo.arima),col="blue")
+
+
+##########################MODELOS###################################
+
+arroz <- glm(log(Arroz.Produção) ~ Precipitacao + Evapo, data=Serie)
+anova(arroz)
+summary (arroz)
+step(arroz, test="LRT")
+AIC(arroz)
+r2(arroz)
+round(r.squaredGLM(arroz)*100,2)
+
+aveia <- glm(Aveia.Produção ~ Precipitacao + Evapo, data=Serie)
+anova(aveia)
+summary (aveia)
+
+milho <- glm(Milho.Produção ~ Precipitacao + Evapo, data=Serie)
+anova(milho)
+summary (milho)
+
+soja <- glm(Soja.Produção ~ Precipitacao + Evapo, data=Serie)
+anova(soja)
+summary (soja)
+
+trigo <- glm(Trigo.Produção ~ Precipitacao + Evapo, data=Serie)
+anova(trigo)
+summary (trigo)
+glm.fit(trigo)
+
+batata <- glm(Batata.Produção ~ Precipitacao + Evapo, data=Serie)
+anova(batata)
+summary (batata)
+
+
+fumo <- glm(Batata.Produção.1 ~ Precipitacao + Evapo, data=Serie)
+anova(fumo)
+summary (fumo)
+
+Uva <- glm(Uva.Produção ~ Precipitacao + Evapo, data=Serie)
+anova(Uva)
+summary (Uva)
+
+
